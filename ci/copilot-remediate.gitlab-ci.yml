@@ -45,10 +45,25 @@ copilot-remediate:
 
   script:
     # The scanner finds. The agent fixes. Keep those two roles separate.
-    - osv-scanner --format json --output findings.json ./ || true
+    #
+    # osv-scanner exits 1 when it finds vulnerabilities, which is the normal path here.
+    # Any other non-zero exit is a scanner failure - and a failed scan STILL writes a
+    # valid, empty findings.json. Without this guard a proxy or TLS error produces
+    # {"results":[]}, the length check below reads zero, and the job exits green having
+    # done nothing. Verified failure mode, not a hypothetical.
+    - |
+      set +e
+      osv-scanner --format json --output-file findings.json ./
+      SCAN_EXIT=$?
+      set -e
+      if [ "$SCAN_EXIT" -ne 0 ] && [ "$SCAN_EXIT" -ne 1 ]; then
+        echo "osv-scanner failed with exit ${SCAN_EXIT}. Refusing to treat an unscanned"
+        echo "repository as a clean one."
+        exit 1
+      fi
     - |
       if [ "$(jq '[.results[]?.packages[]?.vulnerabilities[]?] | length' findings.json)" -eq 0 ]; then
-        echo "No vulnerabilities found. Nothing to remediate."
+        echo "Scan completed successfully with no vulnerabilities. Nothing to remediate."
         exit 0
       fi
 

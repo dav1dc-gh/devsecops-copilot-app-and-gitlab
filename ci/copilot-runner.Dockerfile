@@ -13,7 +13,7 @@ FROM node:22-bookworm-slim
 ARG COPILOT_CLI_VERSION=0.0.369
 ARG GLAB_VERSION=1.48.0
 ARG GITLEAKS_VERSION=8.21.2
-ARG OSV_SCANNER_VERSION=1.9.0
+ARG OSV_SCANNER_VERSION=2.5.1
 
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \

@@ -12,12 +12,17 @@ given to you in a report file, normally `findings.json` in the working directory
 2. Rank findings by severity, then by whether a fixed version exists. Ignore findings with
    no available fix and list them separately in your summary.
 3. Take the highest-severity fixable finding. Address **one finding per branch**.
-4. Bump the affected package to the **lowest** version that resolves the advisory. Do not
-   take the latest version unless it is the lowest fixed version.
-5. Run `npm ci && npm test`. If tests fail, diagnose and fix the cause, or revert and
+4. Bump the affected package to the **lowest fixed version that is greater than the
+   version currently in use**. Advisories often list a fixed version for each maintained
+   release line (for example `1.2.6` *and* `0.2.4`) — never select one that would downgrade
+   the package. Where a single package carries several advisories, choose the **highest**
+   of their individual fixed versions so that all of them are resolved.
+5. Preserve the existing version-pinning style. If the manifest pins exact versions, do not
+   replace them with a caret or tilde range.
+6. Run `npm ci && npm test`. If tests fail, diagnose and fix the cause, or revert and
    report that the upgrade is not safe. Never report success on a failing suite.
-6. Create a branch named `copilot/<package>-<advisory-id>`.
-7. Commit, push, and open a merge request with `glab mr create`.
+7. Create a branch named `copilot/<package>-<advisory-id>`.
+8. Commit, push, and open a merge request with `glab mr create`.
 
 ## Constraints
 

@@ -19,11 +19,19 @@ opens a merge request on GitLab. You do not write any code.
 ### 1. Produce a finding
 
 ```bash
-osv-scanner --format json --output findings.json ./
+osv-scanner --format json --output-file findings.json ./
 osv-scanner --format table ./
 ```
 
-You should see two vulnerable packages. Note which is the more severe.
+You should see **2 vulnerable packages and 5 known vulnerabilities** — 1 Critical, 2 High,
+2 Medium. Note which package carries the Critical.
+
+> **`osv-scanner` exits with code 1 when it finds vulnerabilities.** That is success, not
+> failure. Only an exit code other than 0 or 1 means the scanner itself broke.
+
+> **If you see `Total 0 packages affected`, stop.** A network or TLS failure still writes a
+> valid but empty `findings.json`. Read the error text above the summary line and tell the
+> facilitator — do not continue into step 2 with an empty report.
 
 > The scanner found the problem. Copilot is not going to find it again — it is going to
 > fix it. Keep those two jobs separate in your head.
@@ -34,8 +42,9 @@ You should see two vulnerable packages. Note which is the more severe.
 Read findings.json in this repository. It is the output of OSV-Scanner.
 
 Identify the highest-severity finding that has a fixed version available. Upgrade only
-that package, to the lowest version that resolves the advisory. Do not upgrade anything
-else and do not change application logic.
+that package, to the lowest fixed version that is still an upgrade from the current
+version. Preserve the existing exact-version pinning style in package.json. Do not
+upgrade anything else and do not change application logic.
 
 Then run `npm ci && npm test` and show me the result. Do not tell me the fix works
 unless the test suite passes.
@@ -46,10 +55,20 @@ unless the test suite passes.
 Check specifically:
 
 - Did it change `package.json` **and** `package-lock.json`?
-- Did it pick the *lowest* fixed version, or just the newest release?
+- **Did it preserve your pinning style?** This project pins exact versions (`1.2.5`).
+  `npm install minimist@1.2.6` rewrites that to a caret range (`^1.2.6`), which silently
+  widens what you accept. The agent will not notice unless told.
+- **Did it pick a fixed version that is actually an upgrade?** The advisory for `minimist`
+  lists *two* fixed versions: `1.2.6` and `0.2.4`. Taken literally, "lowest fixed version"
+  means `0.2.4` — a downgrade across a major line that would break the build. The right
+  answer is the lowest fixed version **greater than the version you are on**.
 - Did it touch any file it had no reason to touch?
 
 This review step is the lab. The agent doing the edit is the easy part.
+
+> **If you finish early, try `lodash`.** It carries four advisories whose individual fixed
+> versions differ (`4.17.19`, `4.17.21`, `4.18.0`). Clearing all four needs the *highest*
+> of those, not the lowest. Watch whether the agent works that out.
 
 ### 4. Ship it
 

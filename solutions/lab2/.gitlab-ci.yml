@@ -9,7 +9,7 @@ default:
   image: node:22-bookworm-slim
 
 variables:
-  OSV_SCANNER_VERSION: "1.9.0"
+  OSV_SCANNER_VERSION: "2.5.1"
   GITLEAKS_VERSION: "8.21.2"
 
 unit-tests:
@@ -26,9 +26,11 @@ dependency-scan:
       "https://github.com/google/osv-scanner/releases/download/v${OSV_SCANNER_VERSION}/osv-scanner_linux_amd64"
     - chmod +x /usr/local/bin/osv-scanner
   script:
-    # Never fails the pipeline: this report is the input to the remediation job.
-    - osv-scanner --format json --output findings.json ./ || true
-    - osv-scanner --format table ./ || true
+    # Exit 1 means "vulnerabilities found", which is not a pipeline failure here - this
+    # report is the input to the remediation job. Any other non-zero exit is a real
+    # scanner failure and must not be swallowed.
+    - osv-scanner --format json --output-file findings.json ./ || [ $? -eq 1 ]
+    - osv-scanner --format table ./ || [ $? -eq 1 ]
   artifacts:
     when: always
     paths:

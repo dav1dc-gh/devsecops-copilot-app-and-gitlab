@@ -19,7 +19,7 @@ arguments, then explicit overrides. There is no database and no external service
 | Install | `npm ci` |
 | Test | `npm test` |
 | Run | `npm start` |
-| Scan dependencies | `osv-scanner --format json --output findings.json ./` |
+| Scan dependencies | `osv-scanner --format json --output-file findings.json ./` |
 | Scan for secrets | `gitleaks detect --no-git --redact` |
 
 ## Rules for changes

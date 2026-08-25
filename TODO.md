@@ -47,14 +47,24 @@ Last updated: 2026-08-25
       | `COPILOT_CLI_VERSION` | `0.0.369` | no |
       | `GLAB_VERSION` | `1.48.0` | no |
       | `GITLEAKS_VERSION` | `8.21.2` | no |
-      | `OSV_SCANNER_VERSION` | `1.9.0` | no |
+      | `OSV_SCANNER_VERSION` | `2.5.1` | **yes** — confirmed in dry run |
+
+- [ ] **osv-scanner 2.x release asset naming.** The Dockerfile and Lab 2 solution download
+      `osv-scanner_linux_amd64`. That path was correct for 1.x; confirm it for 2.5.1, which
+      also ships an `osv-scalibr` component.
+
+- [ ] **TLS interception breaks osv-scanner.** Reproduced locally: certificate verification
+      against `api.osv.dev` fails behind a TLS-inspecting proxy
+      (`x509: OSStatus -26276`). Highly likely on the customer's managed laptops.
+      *Mitigation: pre-seed an offline vulnerability database in the runner image and
+      document the offline flags for attendee machines. Add to preflight.*
 
 - [ ] **`glab` release tarball URL format** used in the Dockerfile and Lab 2 solution is
       unverified against the actual release asset naming.
 
-- [ ] **OSV-Scanner JSON schema.** The capstone's early-exit check uses
-      `.results[]?.packages[]?.vulnerabilities[]?`. Validate against real scanner output —
-      a schema mismatch silently skips remediation.
+- [ ] **OSV-Scanner JSON schema.** ~~The capstone's early-exit check uses
+      `.results[]?.packages[]?.vulnerabilities[]?`.~~ **Verified against real output in the
+      Lab 1 dry run — the path is correct.** Remaining work: none.
 
 - [ ] **npm registry / internal mirror** reachable from both attendee laptops and runners.
       Lab 1 verifies its fix by installing a patched version, so this is not optional.
@@ -117,6 +127,16 @@ Last updated: 2026-08-25
 
 ## Resolved
 
+- [x] **Lab 1 walked through end to end (2026-08-25).** Scanner produces 2 packages /
+      5 vulnerabilities (1 Critical, 2 High, 2 Medium). `minimist` 1.2.5 at CVSS 9.8 is the
+      unambiguous target; bumping to 1.2.6 clears the Critical and all 6 tests still pass.
+      Lab design confirmed sound.
+- [x] **Silent-failure hole in the capstone — fixed.** A scanner network/TLS error writes a
+      valid but empty `findings.json`; the old `|| true` plus length check would have
+      exited green having done nothing. Now guarded on the scanner's exit code (0 = clean,
+      1 = findings, anything else = hard fail).
+- [x] **`--output` is deprecated** in favour of `--output-file`. Updated everywhere.
+- [x] **OSV JSON path verified** — `.results[].packages[].vulnerabilities[]` is correct.
 - [x] **Headless Copilot CLI auth in CI** — supported and documented. User-owned
       fine-grained PAT with "Copilot Requests", via `COPILOT_GITHUB_TOKEN`. Classic PATs
       not supported, org-owned tokens cannot carry the permission.

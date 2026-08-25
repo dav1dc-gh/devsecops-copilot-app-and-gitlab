@@ -1,0 +1,7 @@
+node_modules/
+findings.json
+gitleaks-report.json
+agent-session*.md
+copilot-session-*.md
+.copilot-ci/
+.github/copilot/settings.local.json

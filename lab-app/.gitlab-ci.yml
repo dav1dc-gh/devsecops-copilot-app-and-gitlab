@@ -1,0 +1,12 @@
+# Starting point for Lab 2. Deliberately thin: build and test only, no security stages.
+stages:
+  - test
+
+default:
+  image: node:22-bookworm-slim
+
+unit-tests:
+  stage: test
+  script:
+    - npm ci
+    - npm test

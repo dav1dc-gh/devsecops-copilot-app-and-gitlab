@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "hooks": {
+    "preToolUse": [
+      {
+        "type": "command",
+        "matcher": "bash",
+        "bash": "/etc/github-copilot/policy.d/deny-destructive.sh",
+        "timeoutSec": 5
+      }
+    ]
+  }
+}

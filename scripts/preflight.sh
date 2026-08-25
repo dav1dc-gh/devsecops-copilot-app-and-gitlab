@@ -47,6 +47,14 @@ else
   note "https://gitlab.com/gitlab-org/cli/-/releases"
 fi
 
+if command -v osv-scanner >/dev/null 2>&1; then
+  ok "osv-scanner $(osv-scanner --version 2>/dev/null | head -n1)"
+else
+  bad "osv-scanner is not installed"
+  note "brew install osv-scanner"
+  note "or https://github.com/google/osv-scanner/releases"
+fi
+
 head_ "2. Network path"
 
 if [ -n "${HTTPS_PROXY:-${https_proxy:-}}" ]; then
@@ -76,11 +84,14 @@ else
   fi
 fi
 
-if npm ping >/dev/null 2>&1; then
+# `npm ping` 404s against some registry configurations even when the registry is fine.
+# Fetch metadata for the exact version Lab 1 installs instead.
+if npm view minimist@1.2.6 version >/dev/null 2>&1; then
   ok "npm registry reachable"
 else
-  bad "npm registry is not reachable"
-  note "Lab 1 verifies its fix by installing a patched version — this must work"
+  bad "cannot fetch package metadata from the npm registry"
+  note "Lab 1 verifies its fix by installing minimist@1.2.6 — this must work"
+  note "if you use an internal mirror, set it in your .npmrc"
 fi
 
 head_ "3. Authentication"
@@ -120,6 +131,38 @@ if [ -d "$REPO_ROOT/lab-app" ]; then
   fi
 else
   bad "lab-app directory not found at $REPO_ROOT/lab-app"
+fi
+
+# Presence of the binary proves nothing. A scanner blocked by TLS interception still
+# exits cleanly enough to write a valid, EMPTY report — which reads downstream as
+# "no vulnerabilities" rather than "the scan never happened". Assert real findings.
+if command -v osv-scanner >/dev/null 2>&1 && [ -d "$REPO_ROOT/lab-app" ]; then
+  SCAN_TMP="$(mktemp)"
+  (cd "$REPO_ROOT/lab-app" && osv-scanner --format json --output-file "$SCAN_TMP" ./ >/dev/null 2>&1)
+  SCAN_EXIT=$?
+
+  VULN_COUNT="$(node -e "
+    try {
+      const r = JSON.parse(require('fs').readFileSync(process.argv[1], 'utf8'));
+      console.log((r.results || [])
+        .flatMap(s => s.packages || [])
+        .flatMap(p => p.vulnerabilities || []).length);
+    } catch { console.log(0); }
+  " "$SCAN_TMP" 2>/dev/null)"
+
+  # 0 = clean, 1 = vulnerabilities found. Anything else is a broken scanner.
+  if [ "$SCAN_EXIT" -ne 0 ] && [ "$SCAN_EXIT" -ne 1 ]; then
+    bad "osv-scanner failed to run (exit $SCAN_EXIT)"
+    note "most likely TLS interception by a corporate proxy blocking api.osv.dev"
+  elif [ "${VULN_COUNT:-0}" -gt 0 ]; then
+    ok "osv-scanner resolves advisories ($VULN_COUNT found in lab-app)"
+  else
+    bad "osv-scanner reported ZERO vulnerabilities for a knowingly vulnerable project"
+    note "the scan appeared to succeed but returned an empty report"
+    note "this is almost always TLS interception — check certificate trust for api.osv.dev"
+  fi
+
+  rm -f "$SCAN_TMP"
 fi
 
 head_ "Summary"

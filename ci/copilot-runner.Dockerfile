@@ -10,7 +10,7 @@ FROM node:22-bookworm-slim
 
 # Pin everything. An agent that silently changes version between pipeline runs is not
 # something you can put a compliance story around.
-ARG COPILOT_CLI_VERSION=0.0.369
+ARG COPILOT_CLI_VERSION=1.0.80
 ARG GLAB_VERSION=1.48.0
 ARG GITLEAKS_VERSION=8.21.2
 ARG OSV_SCANNER_VERSION=2.5.1

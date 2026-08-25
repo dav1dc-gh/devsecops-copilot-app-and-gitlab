@@ -44,7 +44,7 @@ Last updated: 2026-08-25
       Confirm each exists and is current, then update:
       | ARG | Current value | Verified? |
       | --- | --- | --- |
-      | `COPILOT_CLI_VERSION` | `0.0.369` | no |
+      | `COPILOT_CLI_VERSION` | `1.0.80` | **yes** — `npm view @github/copilot version` |
       | `GLAB_VERSION` | `1.48.0` | no |
       | `GITLEAKS_VERSION` | `8.21.2` | no |
       | `OSV_SCANNER_VERSION` | `2.5.1` | **yes** — confirmed in dry run |
@@ -56,8 +56,9 @@ Last updated: 2026-08-25
 - [ ] **TLS interception breaks osv-scanner.** Reproduced locally: certificate verification
       against `api.osv.dev` fails behind a TLS-inspecting proxy
       (`x509: OSStatus -26276`). Highly likely on the customer's managed laptops.
-      *Mitigation: pre-seed an offline vulnerability database in the runner image and
-      document the offline flags for attendee machines. Add to preflight.*
+      **Preflight now detects this** by asserting a real scan returns findings.
+      *Remaining: pre-seed an offline vulnerability database in the runner image, and
+      document offline flags as an attendee fallback.*
 
 - [ ] **`glab` release tarball URL format** used in the Dockerfile and Lab 2 solution is
       unverified against the actual release asset naming.
@@ -127,6 +128,11 @@ Last updated: 2026-08-25
 
 ## Resolved
 
+- [x] **Preflight gaps closed (2026-08-25).** It did not check for `osv-scanner` at all —
+      the very first command in Lab 1. Now checks presence *and* runs a real scan asserting
+      findings are returned. Also replaced an unreliable `npm ping` (404s against some
+      registry configs while installs work fine) with a lookup of `minimist@1.2.6`, the
+      exact package Lab 1 installs.
 - [x] **Lab 1 walked through end to end (2026-08-25).** Scanner produces 2 packages /
       5 vulnerabilities (1 Critical, 2 High, 2 Medium). `minimist` 1.2.5 at CVSS 9.8 is the
       unambiguous target; bumping to 1.2.6 clears the Critical and all 6 tests still pass.

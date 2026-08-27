@@ -1,5 +1,15 @@
 stages:
   - test
+  - security
+  - remediate
+
+variables:
+  # Pinned tool versions. Do not use floating tags — a scanner that silently
+  # changes version underneath you changes your results with it.
+  OSV_SCANNER_VERSION: "2.5.1"
+  GITLEAKS_VERSION: "8.30.1"
+  GLAB_VERSION: "1.115.0"
+  COPILOT_CLI_VERSION: "1.0.81-6"
 
 default:
   image: node:22-bookworm-slim
@@ -10,3 +20,108 @@ unit-tests:
     - cd lab-app
     - npm ci
     - npm test
+
+# Reports are written to the repository root. Both filenames are listed in
+# .gitignore so a scan run locally never gets committed by accident.
+dependency-scan:
+  stage: security
+  before_script:
+    - apt-get update -qq
+    - apt-get install -y -qq --no-install-recommends curl ca-certificates
+    - curl -sSfL -o /usr/local/bin/osv-scanner
+      "https://github.com/google/osv-scanner/releases/download/v${OSV_SCANNER_VERSION}/osv-scanner_linux_amd64"
+    - chmod +x /usr/local/bin/osv-scanner
+    - osv-scanner --version
+  script:
+    # Human-readable table in the job log.
+    - osv-scanner scan source --recursive --format table ./ || true
+    # Machine-readable report consumed by the remediation job.
+    - osv-scanner scan source --recursive --format json --output-file findings.json ./ || true
+    # The report must exist and be non-empty, or the remediation job has no input.
+    - test -s findings.json
+  # osv-scanner exits 1 when it finds vulnerabilities, which is the expected
+  # state here. findings.json is an input to a later remediation job, so this
+  # job must never fail the pipeline.
+  allow_failure: true
+  artifacts:
+    when: always
+    expire_in: 30 days
+    paths:
+      - findings.json
+
+secret-scan:
+  stage: security
+  before_script:
+    - apt-get update -qq
+    - apt-get install -y -qq --no-install-recommends curl ca-certificates tar
+    - curl -sSfL -o /tmp/gitleaks.tar.gz
+      "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+    - tar -xzf /tmp/gitleaks.tar.gz -C /usr/local/bin gitleaks
+    - chmod +x /usr/local/bin/gitleaks
+    - gitleaks version
+  script:
+    # --no-git scans the working tree as plain files rather than git history.
+    # --redact keeps the matched secret values out of the job log and report.
+    # gitleaks exits non-zero when it finds anything, and that MUST fail the
+    # pipeline — so this job deliberately has no allow_failure.
+    - gitleaks detect --no-git --redact --verbose
+      --report-format json --report-path gitleaks-report.json
+  artifacts:
+    when: always
+    expire_in: 30 days
+    paths:
+      - gitleaks-report.json
+
+# Runs the security-reviewer agent unattended to remediate a finding and open a
+# merge request.
+#
+# Required CI/CD variables — Settings > CI/CD > Variables, both MASKED and PROTECTED:
+#   COPILOT_GITHUB_TOKEN  GitHub token with Copilot access. Authenticates Copilot CLI.
+#   GITLAB_TOKEN          GitLab personal access token with the `api` and
+#                         `write_repository` scopes. Used by glab to push the
+#                         remediation branch and open the merge request.
+#
+# Neither value is written into this file. Both are named in --secret-env-vars so
+# their values are stripped from shell output and the session transcript.
+copilot-remediate:
+  stage: remediate
+  image: node:22-bookworm-slim
+  needs:
+    - job: dependency-scan
+      artifacts: true
+  allow_failure: true
+  rules:
+    # Never run on the default branch. Remediation belongs on a feature branch
+    # that a human reviews before it is merged.
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+      when: never
+    # A human decides when this runs.
+    - when: manual
+  variables:
+    # Repository preToolUse hooks are NOT loaded in prompt mode unless this is set.
+    # Without it the secret-guard hook would silently do nothing.
+    GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS: "true"
+    GITLAB_HOST: $CI_SERVER_URL
+  before_script:
+    - apt-get update -qq
+    - apt-get install -y -qq --no-install-recommends git curl ca-certificates
+    - curl -sSfL -o /tmp/glab.deb
+      "https://gitlab.com/api/v4/projects/gitlab-org%2Fcli/packages/generic/glab/${GLAB_VERSION}/glab_${GLAB_VERSION}_linux_amd64.deb"
+    - dpkg -i /tmp/glab.deb
+    - glab --version
+    - npm install -g "@github/copilot@${COPILOT_CLI_VERSION}"
+    - copilot --version
+  script:
+    - copilot
+      -p "Remediate the highest-severity finding in findings.json and open a merge request."
+      --agent security-reviewer
+      --no-ask-user
+      --allow-tool 'shell(npm:*)' 'shell(git:*)' 'shell(glab:*)'
+      --deny-tool 'write(.github/hooks/**)'
+      --secret-env-vars COPILOT_GITHUB_TOKEN,GITLAB_TOKEN
+      --share copilot-session.md
+      -s
+  artifacts:
+    when: always
+    paths:
+      - copilot-session.md

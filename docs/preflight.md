@@ -67,6 +67,7 @@ It deliberately exercises the real network path rather than checking that binari
 | --- | --- | --- |
 | `cannot reach api.githubcopilot.com` | Proxy allowlist | Raise with your network team, quoting the hostname. This is the most common failure. |
 | `osv-scanner returned ZERO results` | TLS interception breaking certificate verification for `api.osv.dev` | Your proxy's CA must be trusted, or `api.osv.dev` must bypass inspection. **Do not ignore this** — the scan looks like it succeeded. |
+| `No package sources found` when you run the scan by hand | Missing `-r`. `osv-scanner ./` does not recurse, and the manifests are in `lab-app/` | Add `-r`. Note this exits **0**, so it reads as a clean pass rather than a failure. |
 | `Copilot could not complete a prompt` | Not logged in, or a stale `GH_TOKEN` in your shell | `copilot login`. Note that a `GH_TOKEN` set for another tool silently overrides your Copilot login. |
 | `cannot fetch package metadata from the npm registry` | Internal mirror not configured | Set your registry in `.npmrc`. |
 | `glab is not authenticated` | Missing `GITLAB_HOST` | Export it, then re-run `glab auth login --hostname`. |

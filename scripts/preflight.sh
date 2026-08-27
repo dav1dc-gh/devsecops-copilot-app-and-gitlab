@@ -138,7 +138,10 @@ fi
 # "no findings" rather than "the scan never happened". Assert it returns real results.
 if command -v osv-scanner >/dev/null 2>&1 && [ -d "$REPO_ROOT/lab-app" ]; then
   SCAN_TMP="$(mktemp)"
-  (cd "$REPO_ROOT/lab-app" && osv-scanner --format json --output-file "$SCAN_TMP" ./ >/dev/null 2>&1)
+  # Run exactly what Lab 1 step 1 runs, from the same directory. Scanning lab-app/
+  # directly would pass here while the lab's own command finds nothing, which is the
+  # one failure preflight exists to catch.
+  (cd "$REPO_ROOT" && osv-scanner --format json --output-file "$SCAN_TMP" -r ./ >/dev/null 2>&1)
   SCAN_EXIT=$?
 
   VULN_COUNT="$(node -e "

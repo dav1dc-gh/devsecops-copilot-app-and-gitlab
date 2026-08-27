@@ -27,19 +27,24 @@ opens a merge request on GitLab. You do not write any code.
 From the repository root:
 
 ```bash
-osv-scanner --format json --output-file findings.json ./
-osv-scanner --format table ./
+osv-scanner --format json --output-file findings.json -r ./
+osv-scanner --format table -r ./
 ```
 
 You should see **2 vulnerable packages and 5 known vulnerabilities** — 1 Critical, 2 High,
 2 Medium. Note which package carries the Critical.
 
+> **`-r` is not optional.** `osv-scanner ./` scans only the directory you point it at, and
+> the application is one level down in `lab-app/`. Without `-r` it reports
+> `No package sources found` and **exits 0** — a clean pass over nothing at all.
+
 > **`osv-scanner` exits with code 1 when it finds vulnerabilities.** That is success, not
 > failure. Only an exit code other than 0 or 1 means the scanner itself broke.
 
-> **If you see `Total 0 packages affected`, stop.** A network or TLS failure still writes a
-> valid but empty `findings.json`. Read the error text above the summary line and tell the
-> facilitator — do not continue into step 2 with an empty report.
+> **If you see `Total 0 packages affected` or `No package sources found`, stop.** Two very
+> different things produce that: a missing `-r`, or a network or TLS failure that still
+> writes a valid but empty `findings.json`. Read the error text above the summary line and
+> tell the facilitator — do not continue into step 2 with an empty report.
 
 > The scanner found the problem. Copilot is not going to find it again — it is going to
 > fix it. Keep those two jobs separate in your head.
@@ -179,7 +184,7 @@ The agent should be **blocked**, and told why.
 Refresh the report so it reflects the fix you already shipped:
 
 ```bash
-osv-scanner --format json --output-file findings.json ./
+osv-scanner --format json --output-file findings.json -r ./
 ```
 
 Start a fresh session with the `security-reviewer` agent selected — in the Copilot App
@@ -236,7 +241,8 @@ Update .gitlab-ci.yml to add a `security` stage that runs after `test`.
 
 Add two jobs:
 
-1. `dependency-scan` — installs OSV-Scanner at a pinned version, writes a JSON report to
+1. `dependency-scan` — installs OSV-Scanner at a pinned version, scans the repository
+   recursively so it reaches the manifests in lab-app/, writes a JSON report to
    findings.json at the repository root, and also prints a table to the job log. This job
    must NOT fail the pipeline, because the report is an input to a later remediation job.
    Publish findings.json as an artifact that is kept for 30 days.

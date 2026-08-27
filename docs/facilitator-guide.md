@@ -121,6 +121,23 @@ fine-grained PAT with Copilot Requests set up, so do not plan for them to run it
 Reference answer: [solutions/lab3/.gitlab-ci.yml](../solutions/lab3/.gitlab-ci.yml). The
 fully annotated version is [ci/copilot-remediate.gitlab-ci.yml](../ci/copilot-remediate.gitlab-ci.yml).
 
+### Stretch goal — Dockerfile hardening
+
+For fast finishers only, at the end of the lab guide. It exists to absorb the spread
+between the quickest and slowest tables; do not let it become the main event.
+
+Reference answer: [solutions/stretch/Dockerfile](../solutions/stretch/Dockerfile). The
+review catch is that an agent will happily pin `node:22-slim` and call that "pinned" —
+a tag is not a pin. Ask whoever claims to be done what happens when they rebuild in six
+months.
+
+Two things in the reference are deliberately beyond the four the prompt asks for, and are
+worth mentioning if anyone gets there: `src/config.js` defaults the host to `127.0.0.1`,
+so the container is unreachable regardless of `EXPOSE` and `-p` unless the CMD overrides
+it; and read-only rootfs, dropped capabilities and `no-new-privileges` are *runtime* flags
+that belong to whoever deploys the image. Hardening a Dockerfile is not the same as
+hardening a container.
+
 ### 52–60 · Governance and close
 
 End on **their** control story, not your platform story. This segment also absorbs an

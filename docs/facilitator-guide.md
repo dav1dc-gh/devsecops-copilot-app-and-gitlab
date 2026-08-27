@@ -6,21 +6,25 @@ This repository is split in two, deliberately.
 
 | Branch | Contains | Who sees it |
 | --- | --- | --- |
-| `main` | README, preflight, lab guide, `scripts/`, `lab-app/` | Attendees. This is what they clone. |
-| `facilitator` | Everything on `main`, **plus** this guide, the Lab 4 worksheet, `solutions/`, `ci/`, and `TODO.md` | You. |
+| `main` | README, preflight, lab guide, `scripts/`, `lab-app/`, `.gitlab-ci.yml` | Attendees. This is what they clone. |
+| `facilitator` | Everything on `main`, **plus** this guide, the plumbing-tax worksheet, `solutions/`, `ci/`, and `TODO.md` | You. |
 
 Attendees must not be pointed at `facilitator`. It contains the answers to every lab and
 the framing for the closing segment.
 
 **Attendee-facing language is deliberately outcome-focused.** The lab guide never mentions
-what the customer does not have, and never telegraphs the Lab 4 argument. Labs are framed
+what the customer does not have, and never telegraphs the closing argument. Labs are framed
 as *"here is what you will be able to do"*, not *"here is what you are missing"*. Keep to
 that framing verbally as well — the tally in the closing segment only works if the room
 reaches it themselves.
 
-To hand out the Lab 4 pipeline during the session, share
-`ci/copilot-remediate.gitlab-ci.yml` from the `facilitator` branch directly, or merge it
-to `main` after the session.
+Attendees are told to compare their Lab 3 pipeline against `solutions/lab3/.gitlab-ci.yml`
+on this branch. Either paste it into chat at that point in the session, or push it to
+`main` beforehand — the lab guide review table works without it, but the comparison lands
+better with the file in front of them.
+
+To hand out the annotated capstone pipeline, share `ci/copilot-remediate.gitlab-ci.yml`
+from the `facilitator` branch directly, or merge it to `main` after the session.
 
 ## The one-sentence thesis
 
@@ -77,13 +81,10 @@ newest.
 Expect roughly 20% to get a different-but-valid diff. Say so in advance and frame it as
 normal.
 
-### 25–36 · Lab 2 — Shift it left
+The closing line of the section — *"notice how much of that prompt is not fix the
+vulnerability"* — is the setup for Lab 2. Say it out loud even if the room is behind.
 
-Watch for unpinned tool versions in the generated YAML — that is the review catch. The
-Dockerfile stretch goal exists to absorb fast finishers; do not let it become the main
-event.
-
-### 36–46 · Lab 3 — A security agent you can reuse
+### 25–37 · Lab 2 — Turn that prompt into an agent
 
 The most important lab. It converts a demo into a standard.
 
@@ -96,13 +97,31 @@ Two points to land explicitly:
 Attendees must start a **new session** for the hook to load. This is the most common
 stumble in this lab.
 
-Reference answers: [solutions/lab3/](../solutions/lab3/).
+**Do not let anyone skip step 5.** Fixing `lodash` with a single-line prompt is the payoff
+for the whole lab; without it the session reads as filling in config for its own sake. Ask
+the room to compare that one line against the Lab 1 prompt still in their scrollback.
 
-### 46–56 · Lab 4 — Unattended remediation
+Reference answers: [solutions/lab2/](../solutions/lab2/).
 
-See [plumbing-tax.md](plumbing-tax.md). You demo, they annotate.
+### 37–52 · Lab 3 — Run the agent in a GitLab runner
 
-### 56–60 · Governance and close
+This is where the prompt itself is the lesson. The Lab 3 step 3 prompt names the binary,
+every flag, both environment variables and the failure behaviour — and it says so. If
+anyone's pipeline came back without `--agent security-reviewer`, that is the demonstration,
+not a failure: the flags an agent omits are the ones you did not name.
+
+The one worth stopping the room for is `GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS`. Without
+it, repository hooks do not load in prompt mode and the guardrail they built in Lab 2
+silently does nothing in CI. A guardrail that fails quiet is worse than no guardrail.
+
+Step 6 is the plumbing tax — see [plumbing-tax.md](plumbing-tax.md). You run
+`copilot-remediate` for real; they watch and annotate. Nobody in the room will have a
+fine-grained PAT with Copilot Requests set up, so do not plan for them to run it.
+
+Reference answer: [solutions/lab3/.gitlab-ci.yml](../solutions/lab3/.gitlab-ci.yml). The
+fully annotated version is [ci/copilot-remediate.gitlab-ci.yml](../ci/copilot-remediate.gitlab-ci.yml).
+
+### 52–60 · Governance and close
 
 End on **their** control story, not your platform story. This segment also absorbs an
 overrun gracefully.
@@ -156,7 +175,7 @@ change what you say in the room.
 
 4. **Do repo-level hooks load in the Copilot App?** The hooks reference documents Copilot
    CLI and cloud agent explicitly; the App is not named. If the App does not support them,
-   run Lab 3 in the CLI. **Decide this before writing the final attendee handout.**
+   run Lab 2 in the CLI. **Decide this before writing the final attendee handout.**
 5. **Does the runner image build behind their proxy?** It pulls releases from github.com
    and gitlab.com. They may need an internal mirror.
 6. **Bubblewrap availability** if you intend to demo local sandboxing inside a container.
@@ -175,9 +194,13 @@ change what you say in the room.
 
 Cut in this order:
 
-1. Lab 2 stretch goal (Dockerfile hardening)
-2. Lab 2 push-and-watch step
+1. The Dockerfile hardening stretch goal
+2. Lab 3 step 5, push-and-watch — reviewing the pipeline against the reference is the
+   lesson, shipping it is not
 3. Governance table — hand it out instead
 
-**Never cut Lab 3 or Lab 4.** They are the two segments that are still being talked
-about next week.
+**Never cut Lab 2, and never cut Lab 3 step 6.** The agent and the plumbing tax are the
+two segments that are still being talked about next week.
+
+Do not cut Lab 2 to protect Lab 3: Lab 3 calls the agent Lab 2 builds, so losing Lab 2
+leaves the pipeline pointing at an agent that does not exist.

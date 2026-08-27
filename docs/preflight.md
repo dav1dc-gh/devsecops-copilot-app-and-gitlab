@@ -8,8 +8,8 @@ hour watching rather than building.
 | Tool | Why | Install |
 | --- | --- | --- |
 | Node.js 22+ | Required by Copilot CLI | https://nodejs.org |
-| GitHub Copilot App | The primary surface for Labs 1–3 | Your usual internal software channel |
-| Copilot CLI | Used for the hook lab and the capstone | `npm install -g @github/copilot` |
+| GitHub Copilot App | The primary surface for all three labs | Your usual internal software channel |
+| Copilot CLI | Used by the preflight check, and by the Lab 3 pipeline | `npm install -g @github/copilot` |
 | `osv-scanner` | Produces the findings Lab 1 remediates | `brew install osv-scanner` |
 | `glab` | Creates merge requests on your GitLab instance | https://gitlab.com/gitlab-org/cli/-/releases |
 | `git` | — | — |

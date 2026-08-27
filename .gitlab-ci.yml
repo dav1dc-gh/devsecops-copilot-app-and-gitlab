@@ -7,5 +7,6 @@ default:
 unit-tests:
   stage: test
   script:
+    - cd lab-app
     - npm ci
     - npm test

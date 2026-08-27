@@ -1,5 +1,27 @@
 # Facilitator guide
 
+## Branch model — read this first
+
+This repository is split in two, deliberately.
+
+| Branch | Contains | Who sees it |
+| --- | --- | --- |
+| `main` | README, preflight, lab guide, `scripts/`, `lab-app/` | Attendees. This is what they clone. |
+| `facilitator` | Everything on `main`, **plus** this guide, the Lab 4 worksheet, `solutions/`, `ci/`, and `TODO.md` | You. |
+
+Attendees must not be pointed at `facilitator`. It contains the answers to every lab and
+the framing for the closing segment.
+
+**Attendee-facing language is deliberately outcome-focused.** The lab guide never mentions
+what the customer does not have, and never telegraphs the Lab 4 argument. Labs are framed
+as *"here is what you will be able to do"*, not *"here is what you are missing"*. Keep to
+that framing verbally as well — the tally in the closing segment only works if the room
+reaches it themselves.
+
+To hand out the Lab 4 pipeline during the session, share
+`ci/copilot-remediate.gitlab-ci.yml` from the `facilitator` branch directly, or merge it
+to `main` after the session.
+
 ## The one-sentence thesis
 
 > Copilot is the remediation layer on top of the scanners you already run.
@@ -61,7 +83,7 @@ Watch for unpinned tool versions in the generated YAML — that is the review ca
 Dockerfile stretch goal exists to absorb fast finishers; do not let it become the main
 event.
 
-### 36–46 · Lab 3 — Guardrails without GHAS
+### 36–46 · Lab 3 — A security agent you can reuse
 
 The most important lab. It converts a demo into a standard.
 
@@ -76,7 +98,7 @@ stumble in this lab.
 
 Reference answers: [solutions/lab3/](../solutions/lab3/).
 
-### 46–56 · Capstone
+### 46–56 · Lab 4 — Unattended remediation
 
 See [plumbing-tax.md](plumbing-tax.md). You demo, they annotate.
 
@@ -157,5 +179,5 @@ Cut in this order:
 2. Lab 2 push-and-watch step
 3. Governance table — hand it out instead
 
-**Never cut Lab 3 or the capstone.** They are the two segments that are still being talked
+**Never cut Lab 3 or Lab 4.** They are the two segments that are still being talked
 about next week.

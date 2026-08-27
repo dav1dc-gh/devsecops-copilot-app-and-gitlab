@@ -90,7 +90,8 @@ agent, from a machine-readable finding.
 
 ## Lab 2 — Shift it left (11 min)
 
-**Goal:** stop finding these by hand. The scanners move into `.gitlab-ci.yml`.
+**Goal:** stop doing step 1 by hand. Move the scanners into the pipeline so every change
+is checked automatically, and a leaked credential breaks the build before it lands.
 
 ### 1. Look at what you have
 
@@ -144,10 +145,17 @@ Explain each change.
 
 ---
 
-## Lab 3 — Guardrails without GHAS (10 min)
+## Lab 3 — A security agent you can reuse (10 min)
 
-**Goal:** you have no Advanced Security, no push protection, and no platform-enforced
-policy. So enforcement moves into the agent's own execution path.
+**Goal:** everything you have done so far worked because *you* were driving. This lab
+captures that expertise as configuration, so the next person gets the same result without
+your help.
+
+You will build three things that live in the repository and travel with it:
+
+- **Project conventions** every agent session picks up automatically
+- **A `security-reviewer` agent** anyone on the team can summon by name
+- **A guardrail** that stops credentials being written into the code
 
 ### 1. Give the agent the house rules
 
@@ -172,7 +180,7 @@ via glab. Constraints: no unrelated upgrades, no new dependencies, no force push
 write credentials to a file, and never report success on a failing test suite.
 ```
 
-### 3. Now the enforcement
+### 3. Now the guardrail
 
 ```text
 Create a preToolUse hook that blocks the agent from writing credentials into this
@@ -207,18 +215,20 @@ The agent should be **blocked**, and told why.
 
 ### 5. Understand what you just built
 
-Two things worth knowing, because they decide whether this is a real control:
+Two things worth knowing, because they decide how much weight this can carry:
 
 - `preToolUse` command hooks are **fail-closed**. A crash or non-zero exit denies the
   call. Good.
-- **Timeouts always fail open.** A slow hook does not block the agent. So this is a
-  guardrail, not a boundary — do not put it in a compliance document as a control.
+- **Timeouts always fail open.** A slow hook does not block the agent. So treat this as a
+  strong guardrail rather than a hard boundary — it belongs in your engineering standards,
+  not in a compliance document as a control.
 
 **Checkpoint:** your conventions, your specialist, and your enforcement all live in the
-repository and travel with it.
+repository and travel with it. Anyone who clones this project inherits them.
 
 ---
 
-## Capstone — see [plumbing-tax.md](plumbing-tax.md)
+## Lab 4 — Unattended remediation
 
-Watch the facilitator run an agent inside a GitLab runner, then count what it costs.
+Your facilitator will run the same workflow inside a GitLab runner, with no developer
+driving it. You will get the pipeline definition to read through together.

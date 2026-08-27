@@ -2,7 +2,7 @@
   "name": "lab-app",
   "version": "1.0.0",
   "private": true,
-  "description": "Workshop lab application. Dependencies are intentionally pinned to vulnerable versions.",
+  "description": "A small configuration-driven HTTP service.",
   "type": "commonjs",
   "engines": {
     "node": ">=22"

@@ -134,8 +134,8 @@ else
 fi
 
 # Presence of the binary proves nothing. A scanner blocked by TLS interception still
-# exits cleanly enough to write a valid, EMPTY report — which reads downstream as
-# "no vulnerabilities" rather than "the scan never happened". Assert real findings.
+# exits cleanly enough to write a valid, EMPTY report - which reads downstream as
+# "no findings" rather than "the scan never happened". Assert it returns real results.
 if command -v osv-scanner >/dev/null 2>&1 && [ -d "$REPO_ROOT/lab-app" ]; then
   SCAN_TMP="$(mktemp)"
   (cd "$REPO_ROOT/lab-app" && osv-scanner --format json --output-file "$SCAN_TMP" ./ >/dev/null 2>&1)
@@ -157,7 +157,7 @@ if command -v osv-scanner >/dev/null 2>&1 && [ -d "$REPO_ROOT/lab-app" ]; then
   elif [ "${VULN_COUNT:-0}" -gt 0 ]; then
     ok "osv-scanner resolves advisories ($VULN_COUNT found in lab-app)"
   else
-    bad "osv-scanner reported ZERO vulnerabilities for a knowingly vulnerable project"
+    bad "osv-scanner returned ZERO results for a project that is expected to have them"
     note "the scan appeared to succeed but returned an empty report"
     note "this is almost always TLS interception — check certificate trust for api.osv.dev"
   fi

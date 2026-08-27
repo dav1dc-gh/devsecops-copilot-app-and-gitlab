@@ -1,4 +1,3 @@
-# Starting point for Lab 2. Deliberately thin: build and test only, no security stages.
 stages:
   - test
 

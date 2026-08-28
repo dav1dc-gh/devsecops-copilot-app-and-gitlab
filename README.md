@@ -1,5 +1,18 @@
 # DevSecOps with the GitHub Copilot App
 
+> **Short link:** <https://gh.io/devsecops-copilot-app-and-gitlab>
+>
+> Use this to get back to the repository quickly, or to share it with someone else.
+> Scan the QR code below to open it on another device.
+
+<p align="center">
+  <a href="https://gh.io/devsecops-copilot-app-and-gitlab">
+    <img src="imgs/gh-qr-devsecops-copilot-app-and-gitlab.png"
+         alt="QR code linking to https://gh.io/devsecops-copilot-app-and-gitlab"
+         width="180">
+  </a>
+</p>
+
 A 60-minute hands-on lunch and learn. You will use the GitHub Copilot App and Copilot CLI
 to automate real DevSecOps work against a repository hosted on your own GitLab instance.
 
